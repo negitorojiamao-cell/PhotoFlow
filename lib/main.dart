@@ -217,7 +217,7 @@ class _GalleryPageState extends State<GalleryPage> {
             Row(children: [
               Text('Library', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
               const SizedBox(width: 10),
-              Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withOpacity(0.10), borderRadius: BorderRadius.circular(20)), child: Text('${_photos.length}', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w700))),
+              Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(20)), child: Text('${_photos.length}', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w700))),
             ]),
             const SizedBox(height: 12),
             Expanded(child: _loading
@@ -249,10 +249,22 @@ class _GalleryPageState extends State<GalleryPage> {
                             onTap: openContainer,
                             borderRadius: BorderRadius.circular(20),
                             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                              Expanded(child: Hero(
-                                tag: photo.path,
-                                child: ClipRRect(borderRadius: BorderRadius.circular(20), child: Image.file(File(photo.path), fit: BoxFit.cover, errorBuilder: (_, __, ___) => const ColoredBox(color: Color(0xFFE7E5F5), child: Icon(Icons.broken_image_outlined, size: 34))),
-                              )),
+                              Expanded(
+                                child: Hero(
+                                  tag: photo.path,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: Image.file(
+                                      File(photo.path),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => const ColoredBox(
+                                        color: Color(0xFFE7E5F5),
+                                        child: Icon(Icons.broken_image_outlined, size: 34),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
                               Padding(padding: const EdgeInsets.fromLTRB(11, 10, 11, 11), child: Text(photo.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12))),
                             ]),
                           ),
