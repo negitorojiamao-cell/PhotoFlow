@@ -209,28 +209,6 @@ class _GalleryPageState extends State<GalleryPage> {
     });
   }
 
-  void _openPhoto(PhotoItem photo) {
-    if (_selectionMode) {
-      _toggleSelection(photo);
-      return;
-    }
-    Navigator.of(context).push(MaterialPageRoute<void>(
-      builder: (_) => PhotoViewer(
-        photo: photo,
-        onShare: () => _share(photo),
-        onDelete: () async {
-          final next = await _library.remove(photo);
-          if (mounted) setState(() => _photos = next);
-          if (mounted) Navigator.of(context).pop();
-        },
-        onTagsChanged: (tags) async {
-          final next = await _library.updateTags(_photos, {photo.path}, tags);
-          if (mounted) setState(() => _photos = next);
-        },
-      ),
-    ));
-  }
-
   Future<void> _share(PhotoItem photo) async {
     try {
       await Share.shareXFiles(
@@ -323,38 +301,6 @@ class _GalleryPageState extends State<GalleryPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Updated tags for ${selected.length} photo(s)')),
     );
-  }
-
-  Future<void> _editOnePhotoTags(PhotoItem photo) async {
-    final controller = TextEditingController(text: photo.tags.join(', '));
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit photo tags'),
-        content: SizedBox(
-          width: 380,
-          child: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: const InputDecoration(
-              labelText: 'Tags (comma-separated)',
-              hintText: 'Travel, Friends, Favorites',
-              border: OutlineInputBorder(),
-            ),
-            onSubmitted: (value) => Navigator.pop(context, value),
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('Save tags')),
-        ],
-      ),
-    );
-    controller.dispose();
-    if (result == null || !mounted) return;
-    final tags = result.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toSet().toList()..sort();
-    final next = await _library.updateTags(_photos, {photo.path}, tags);
-    if (mounted) setState(() => _photos = next);
   }
 
   @override
@@ -471,105 +417,259 @@ class _GalleryPageState extends State<GalleryPage> {
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : shown.isEmpty
-                      ? _EmptyLibrary(hasPhotos: _photos.isNotEmpty, onAdd: _import)
-                      : LayoutBuilder(builder: (context, constraints) {
-                          final columns = constraints.maxWidth >= 1050 ? 5 : constraints.maxWidth >= 760 ? 4 : constraints.maxWidth >= 480 ? 3 : 2;
-                          return GridView.builder(
-                            key: const PageStorageKey('photo-grid'),
-                            itemCount: shown.length,
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: columns, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.83),
-                            itemBuilder: (context, index) {
-                              final photo = shown[index];
-                              final selected = _selectedPaths.contains(photo.path);
-                              return OpenContainer(
-                                key: ValueKey(photo.path),
-                                tappable: !_selectionMode,
-                                transitionDuration: const Duration(milliseconds: 420),
-                                closedElevation: 0,
-                                openElevation: 0,
-                                closedColor: Colors.white,
-                                openColor: const Color(0xFFF7F7FB),
-                                closedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                openBuilder: (context, closeContainer) => PhotoViewer(
-                                  photo: photo,
-                                  onShare: () => _share(photo),
-                                  onDelete: () async {
-                                    final next = await _library.remove(photo);
-                                    if (mounted) setState(() => _photos = next);
-                                    closeContainer();
-                                  },
-                                  onTagsChanged: (tags) async {
-                                    final next = await _library.updateTags(_photos, {photo.path}, tags);
-                                    if (mounted) setState(() => _photos = next);
-                                  },
-                                ),
-                                closedBuilder: (context, openContainer) => GestureDetector(
-                                  onTap: () {
-                                    if (_selectionMode) {
-                                      _toggleSelection(photo);
-                                    } else {
-                                      openContainer();
-                                    }
-                                  },
-                                  onDoubleTap: () => _toggleSelection(photo),
-                                  onLongPress: () => _toggleSelection(photo),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 180),
-                                    curve: Curves.easeOutCubic,
-                                    decoration: BoxDecoration(
-                                      color: selected ? const Color(0xFFECE8FF) : Colors.white,
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(color: selected ? Theme.of(context).colorScheme.primary : Colors.transparent, width: 2),
-                                      boxShadow: selected ? [BoxShadow(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12), blurRadius: 18, offset: const Offset(0, 6))] : const [],
-                                    ),
-                                    child: Stack(children: [
-                                      Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                                        Expanded(
-                                          child: Hero(
-                                            tag: photo.path,
-                                            child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(18),
-                                              child: Image.file(
-                                                File(photo.path),
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (_, __, ___) => const ColoredBox(color: Color(0xFFE7E5F5), child: Icon(Icons.broken_image_outlined, size: 34)),
+                      ? _EmptyLibrary(
+                          hasPhotos: _photos.isNotEmpty,
+                          onAdd: _import,
+                        )
+                      : LayoutBuilder(
+                          builder: (context, constraints) {
+                            final columns = constraints.maxWidth >= 1050
+                                ? 5
+                                : constraints.maxWidth >= 760
+                                    ? 4
+                                    : constraints.maxWidth >= 480
+                                        ? 3
+                                        : 2;
+                            return GridView.builder(
+                              key: const PageStorageKey('photo-grid'),
+                              itemCount: shown.length,
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: columns,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                                childAspectRatio: 0.83,
+                              ),
+                              itemBuilder: (context, index) {
+                                final photo = shown[index];
+                                final selected =
+                                    _selectedPaths.contains(photo.path);
+                                return OpenContainer<void>(
+                                  key: ValueKey(photo.path),
+                                  tappable: !_selectionMode,
+                                  transitionDuration:
+                                      const Duration(milliseconds: 420),
+                                  closedElevation: 0,
+                                  openElevation: 0,
+                                  closedColor: Colors.white,
+                                  openColor: const Color(0xFFF7F7FB),
+                                  closedShape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  openBuilder: (context, closeContainer) =>
+                                      PhotoViewer(
+                                    photo: photo,
+                                    onShare: () => _share(photo),
+                                    onDelete: () async {
+                                      final next =
+                                          await _library.remove(photo);
+                                      if (mounted) {
+                                        setState(() => _photos = next);
+                                      }
+                                      closeContainer();
+                                    },
+                                    onTagsChanged: (tags) async {
+                                      final next = await _library.updateTags(
+                                        _photos,
+                                        {photo.path},
+                                        tags,
+                                      );
+                                      if (mounted) {
+                                        setState(() => _photos = next);
+                                      }
+                                    },
+                                  ),
+                                  closedBuilder: (context, openContainer) =>
+                                      GestureDetector(
+                                    onTap: () {
+                                      if (_selectionMode) {
+                                        _toggleSelection(photo);
+                                      } else {
+                                        openContainer();
+                                      }
+                                    },
+                                    onDoubleTap: () =>
+                                        _toggleSelection(photo),
+                                    onLongPress: () =>
+                                        _toggleSelection(photo),
+                                    child: AnimatedContainer(
+                                      duration:
+                                          const Duration(milliseconds: 180),
+                                      curve: Curves.easeOutCubic,
+                                      decoration: BoxDecoration(
+                                        color: selected
+                                            ? const Color(0xFFECE8FF)
+                                            : Colors.white,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: selected
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .primary
+                                              : Colors.transparent,
+                                          width: 2,
+                                        ),
+                                        boxShadow: selected
+                                            ? [
+                                                BoxShadow(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .primary
+                                                      .withValues(alpha: 0.12),
+                                                  blurRadius: 18,
+                                                  offset: const Offset(0, 6),
+                                                ),
+                                              ]
+                                            : const [],
+                                      ),
+                                      child: Stack(
+                                        children: [
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.stretch,
+                                            children: [
+                                              Expanded(
+                                                child: Hero(
+                                                  tag: photo.path,
+                                                  child: ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            18),
+                                                    child: Image.file(
+                                                      File(photo.path),
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder: (
+                                                        context,
+                                                        error,
+                                                        stackTrace,
+                                                      ) =>
+                                                          const ColoredBox(
+                                                        color:
+                                                            Color(0xFFE7E5F5),
+                                                        child: Icon(
+                                                          Icons
+                                                              .broken_image_outlined,
+                                                          size: 34,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.fromLTRB(
+                                                  11,
+                                                  9,
+                                                  11,
+                                                  8,
+                                                ),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      photo.name,
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                    if (photo.tags.isNotEmpty) ...[
+                                                      const SizedBox(height: 5),
+                                                      Wrap(
+                                                        spacing: 4,
+                                                        runSpacing: 3,
+                                                        children: photo.tags
+                                                            .take(2)
+                                                            .map(
+                                                              (tag) => Container(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .symmetric(
+                                                                  horizontal: 6,
+                                                                  vertical: 2,
+                                                                ),
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  color: const Color(
+                                                                      0xFFEDEAFF),
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              6),
+                                                                ),
+                                                                child: Text(
+                                                                  tag,
+                                                                  maxLines: 1,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                  style:
+                                                                      const TextStyle(
+                                                                    fontSize: 9,
+                                                                    color: Color(
+                                                                        0xFF5E4DD0),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            )
+                                                            .toList(),
+                                                      ),
+                                                    ],
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          if (selected)
+                                            Positioned(
+                                              top: 10,
+                                              right: 10,
+                                              child: Container(
+                                                width: 28,
+                                                height: 28,
+                                                decoration: BoxDecoration(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .primary,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(
+                                                  Icons.check_rounded,
+                                                  color: Colors.white,
+                                                  size: 20,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.fromLTRB(11, 9, 11, 8),
-                                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                            Text(photo.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
-                                            if (photo.tags.isNotEmpty) ...[
-                                              const SizedBox(height: 5),
-                                              Wrap(spacing: 4, runSpacing: 3, children: photo.tags.take(2).map((tag) => Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                decoration: BoxDecoration(color: const Color(0xFFEDEAFF), borderRadius: BorderRadius.circular(6)),
-                                                child: Text(tag, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 9, color: Color(0xFF5E4DD0))),
-                                              )).toList()),
-                                            ],
-                                          ]),
-                                        ),
-                                      ]),
-                                      if (selected)
-                                        Positioned(
-                                          top: 10, right: 10,
-                                          child: Container(
-                                            width: 28, height: 28,
-                                            decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, shape: BoxShape.circle),
-                                            child: const Icon(Icons.check_rounded, color: Colors.white, size: 20),
-                                          ),
-                                        ),
-                                      if (_selectionMode && !selected)
-                                        const Positioned(top: 10, right: 10, child: Icon(Icons.circle_outlined, color: Colors.white, shadows: [Shadow(blurRadius: 4, color: Colors.black54)])),
-                                    ]),
+                                          if (_selectionMode && !selected)
+                                            const Positioned(
+                                              top: 10,
+                                              right: 10,
+                                              child: Icon(
+                                                Icons.circle_outlined,
+                                                color: Colors.white,
+                                                shadows: [
+                                                  Shadow(
+                                                    blurRadius: 4,
+                                                    color: Colors.black54,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
-                          );
-                        }),
+                                );
+                              },
+                            );
+                          },
+                        ),
             ),
           ]),
         ),
