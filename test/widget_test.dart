@@ -11,7 +11,7 @@ void main() {
   final testDirectory = Directory.systemTemp.createTempSync('photoflow_test_');
 
   setUp(() {
-    channel.setMockMethodCallHandler((call) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       if (call.method == 'getApplicationDocumentsDirectory') {
         return testDirectory.path;
       }
@@ -20,7 +20,7 @@ void main() {
   });
 
   tearDown(() {
-    channel.setMockMethodCallHandler(null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, null);
   });
 
   testWidgets('PhotoFlow displays its gallery shell', (tester) async {
