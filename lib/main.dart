@@ -28,8 +28,7 @@ class PhotoFlowApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFF7F7FB),
         fontFamily: 'Segoe UI',
         appBarTheme: const AppBarTheme(backgroundColor: Color(0xFFF7F7FB), elevation: 0),
-        cardTheme: CardThemeData(color: Colors.white, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22))),
-      ),
+              ),
       home: const GalleryPage(),
     );
   }
@@ -218,7 +217,7 @@ class _GalleryPageState extends State<GalleryPage> {
             Row(children: [
               Text('Library', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
               const SizedBox(width: 10),
-              Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(20)), child: Text('${_photos.length}', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w700))),
+              Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withOpacity(0.10), borderRadius: BorderRadius.circular(20)), child: Text('${_photos.length}', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w700))),
             ]),
             const SizedBox(height: 12),
             Expanded(child: _loading
