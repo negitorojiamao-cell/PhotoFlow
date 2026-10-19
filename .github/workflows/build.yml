@@ -29,12 +29,13 @@ jobs:
       - name: Install packages
         run: flutter pub get
 
+      - name: Format Dart code
+        run: dart format lib test
+
       - name: Analyze Dart code
-        continue-on-error: true
         run: flutter analyze
 
       - name: Run widget tests
-        continue-on-error: true
         run: flutter test
 
       - name: Build Windows release
@@ -76,6 +77,15 @@ jobs:
 
       - name: Install packages
         run: flutter pub get
+
+      - name: Format Dart code
+        run: dart format lib test
+
+      - name: Analyze Dart code
+        run: flutter analyze
+
+      - name: Run widget tests
+        run: flutter test
 
       - name: Build Android release APK
         run: flutter build apk --release
