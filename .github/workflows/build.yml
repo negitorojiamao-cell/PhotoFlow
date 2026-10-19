@@ -1,4 +1,4 @@
-name: PhotoFlow Windows EXE
+name: PhotoFlow builds
 
 on:
   push:
@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   build-windows:
+    name: Build Windows EXE bundle
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -48,5 +49,44 @@ jobs:
         with:
           name: PhotoFlow-Windows-x64
           path: PhotoFlow-Windows-x64.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  build-android:
+    name: Build Android APK bundle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generate Android runner
+        run: flutter create --project-name photoflow --platforms=android .
+
+      - name: Install packages
+        run: flutter pub get
+
+      - name: Build Android release APK
+        run: flutter build apk --release
+
+      - name: Package APK
+        run: zip PhotoFlow-Android-APK.zip build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload Android APK bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: PhotoFlow-Android-APK
+          path: PhotoFlow-Android-APK.zip
           if-no-files-found: error
           retention-days: 14
