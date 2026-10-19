@@ -12,7 +12,7 @@ void main() {
 
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
-      if (call.method == 'getApplicationDocumentsDirectory') {
+      if (call.method == 'getApplicationDocumentsPath') {
         return testDirectory.path;
       }
       return null;
