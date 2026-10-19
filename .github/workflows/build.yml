@@ -75,6 +75,11 @@ jobs:
       - name: Generate Android runner
         run: flutter create --project-name photoflow --platforms=android .
 
+      - name: Set Android compile SDK
+        run: |
+          sed -i 's/compileSdk = flutter\\.compileSdkVersion/compileSdk = 36/' android/app/build.gradle.kts
+          grep -q 'compileSdk = 36' android/app/build.gradle.kts
+
       - name: Install packages
         run: flutter pub get
 
