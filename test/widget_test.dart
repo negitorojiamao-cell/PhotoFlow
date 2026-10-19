@@ -25,7 +25,7 @@ void main() {
 
   testWidgets('PhotoFlow displays its gallery shell', (tester) async {
     await tester.pumpWidget(const PhotoFlowApp());
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('PhotoFlow'), findsOneWidget);
     expect(find.text('Your moments,\nyour space.'), findsOneWidget);
   });
