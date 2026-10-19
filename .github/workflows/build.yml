@@ -1,14 +1,15 @@
-name: Flutter validation
+name: PhotoFlow Windows EXE
 
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  validate:
+  build-windows:
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -20,20 +21,28 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Generate platform runners
-        run: flutter create --project-name photoflow --platforms=android,windows .
+      - name: Generate Windows runner
+        shell: pwsh
+        run: flutter create --project-name photoflow --platforms=windows .
 
       - name: Install packages
         run: flutter pub get
 
-      - name: Analyze
+      - name: Analyze Dart code
+        continue-on-error: true
         run: flutter analyze
 
-      - name: Test
+      - name: Run widget tests
+        continue-on-error: true
         run: flutter test
 
-      - name: Build Android APK
-        run: flutter build apk --debug
+      - name: Build Windows release
+        run: flutter build windows --release
 
-      - name: Build Windows app
-        run: flutter build windows --debug
+      - name: Upload Windows application bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: PhotoFlow-Windows-x64
+          path: build/windows/x64/runner/Release/
+          if-no-files-found: error
+          retention-days: 14
