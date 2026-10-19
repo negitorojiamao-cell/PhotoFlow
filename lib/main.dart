@@ -382,7 +382,7 @@ class _GalleryPageState extends State<GalleryPage> {
           if (_selectionMode)
             TextButton.icon(
               onPressed: _editSelectedTags,
-              icon: const Icon(Icons.drive_file_move_outline_rounded),
+              icon: const Icon(Icons.label_outline_rounded),
               label: Text('Organize (${_selectedPaths.length})'),
             ),
           if (_selectionMode)
@@ -570,6 +570,7 @@ class _GalleryPageState extends State<GalleryPage> {
                             },
                           );
                         }),
+            ),
           ]),
         ),
       ),
