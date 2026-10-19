@@ -14,7 +14,9 @@ void main() {
 }
 
 class PhotoFlowApp extends StatelessWidget {
-  const PhotoFlowApp({super.key});
+  const PhotoFlowApp({super.key, this.library});
+
+  final PhotoLibrary? library;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +31,7 @@ class PhotoFlowApp extends StatelessWidget {
         fontFamily: 'Segoe UI',
         appBarTheme: const AppBarTheme(backgroundColor: Color(0xFFF7F7FB), elevation: 0),
       ),
-      home: const GalleryPage(),
+      home: GalleryPage(library: library),
     );
   }
 }
@@ -70,11 +72,15 @@ class PhotoItem {
 }
 
 class PhotoLibrary {
+  PhotoLibrary({Future<Directory> Function()? documentsDirectoryProvider})
+    : _documentsDirectoryProvider = documentsDirectoryProvider ?? getApplicationDocumentsDirectory;
+
+  final Future<Directory> Function() _documentsDirectoryProvider;
   Directory? _root;
   File? _index;
 
   Future<void> init() async {
-    final docs = await getApplicationDocumentsDirectory();
+    final docs = await _documentsDirectoryProvider();
     _root = Directory(p.join(docs.path, 'PhotoFlow', 'originals'));
     await _root!.create(recursive: true);
     _index = File(p.join(_root!.parent.path, 'library.json'));
@@ -143,13 +149,15 @@ class PhotoLibrary {
 }
 
 class GalleryPage extends StatefulWidget {
-  const GalleryPage({super.key});
+  const GalleryPage({super.key, this.library});
+
+  final PhotoLibrary? library;
   @override
   State<GalleryPage> createState() => _GalleryPageState();
 }
 
 class _GalleryPageState extends State<GalleryPage> {
-  final PhotoLibrary _library = PhotoLibrary();
+  late final PhotoLibrary _library;
   List<PhotoItem> _photos = [];
   bool _loading = true;
   bool _importing = false;
@@ -162,6 +170,7 @@ class _GalleryPageState extends State<GalleryPage> {
   @override
   void initState() {
     super.initState();
+    _library = widget.library ?? PhotoLibrary();
     _load();
   }
 
