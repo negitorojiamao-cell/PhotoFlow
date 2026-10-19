@@ -1,37 +1,55 @@
 # PhotoFlow
 
-PhotoFlow is a local-first photo library for Android and Windows, built with Flutter.
+PhotoFlow is a local-first photo library prototype for Android and Windows, built with Flutter.
 
-## Goals
+## What is implemented
 
-- Keep imported photo files byte-for-byte unchanged; previews are for display only.
-- Provide a polished, animation-rich gallery and full-screen viewer.
-- Use the Android system share sheet so users can choose Quick Share when available.
-- Support direct device-to-device transfer as a separate feature, with explicit receiver approval and encrypted transport.
-- Build Android APKs and Windows desktop releases from a shared Flutter UI.
+- Animated, responsive photo grid and expanding photo viewer.
+- Import multiple images using the native file picker.
+- Copy originals into app-private storage without decoding/re-encoding them.
+- Local JSON library index, filename search, zoom/pan, remove, and share.
+- Android/Windows shared UI codebase.
 
-## Current status
+## Current limitations
 
-This repository starts with the Flutter application scaffold and local photo import/view/share prototype. It is not yet a finished application. Direct LAN transfer, Windows Quick Share integration, automated tests, and packaged builds remain future work.
+This is an early prototype, **not a finished release**. Direct device-to-device transfer is not implemented yet. Android sharing uses the system share sheet; Quick Share appears only when the device exposes it. Windows sharing and Quick Share behavior still need testing on a real Windows installation. There are no cloud uploads.
+
+The Git repository starts with shared Dart source rather than generated Android/Windows runner folders. Run the setup command below once to generate platform scaffolding locally.
 
 ## Requirements
 
-- Flutter stable SDK (3.24 or newer recommended)
+- Flutter stable SDK (Dart 3.3+)
 - Android SDK for Android builds
-- Windows 10/11 with Visual Studio's **Desktop development with C++** workload for Windows builds
+- Windows 10/11 and Visual Studio with the **Desktop development with C++** workload for Windows builds
 
-## Run
+## Setup on Windows
 
-```sh
-flutter pub get
-flutter run
+Clone the repository, open PowerShell in the project folder, then run:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\tool\setup.ps1
 ```
 
-On Windows, run `flutter run -d windows`. On Android, enable developer options and USB debugging or use an Android emulator.
+To launch on Windows:
 
-## Important behavior
+```powershell
+flutter run -d windows
+```
 
-- Imported images are copied into the app's private documents directory without decoding/re-encoding the original file.
-- Android sharing opens the OS share sheet; Quick Share appears only when the device/OS provides it.
-- The initial Windows share implementation uses the plugin's supported sharing mechanism. Native Quick Share invocation is not guaranteed.
-- The initial prototype stores photos locally and does not upload them to a server.
+To launch on a connected Android device (USB debugging enabled):
+
+```powershell
+flutter run -d android
+```
+
+## Data handling
+
+- Imported images are copied into the app's private documents directory.
+- The original file bytes are not re-encoded during import.
+- The prototype stores its library index and photo copies locally. Uninstalling the app or clearing its data may remove those copies.
+- Share actions send the original copied file, not a generated thumbnail.
+
+## Roadmap
+
+See [docs/ROADMAP.md](docs/ROADMAP.md) for native sharing validation, secure direct transfer, tests, thumbnail cache and packaging milestones.
