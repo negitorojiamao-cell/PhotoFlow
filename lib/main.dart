@@ -465,8 +465,6 @@ class _GalleryPageState extends State<GalleryPage> {
                 child: Text('${shown.length}', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w700)),
               ),
               const Spacer(),
-              if (!_selectionMode)
-                TextButton.icon(onPressed: () => _editSelectedTags(), icon: const Icon(Icons.label_outline_rounded), label: const Text('Tag selected')),
             ]),
             const SizedBox(height: 8),
             Expanded(
